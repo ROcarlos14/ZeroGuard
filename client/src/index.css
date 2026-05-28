@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { @apply border-zg-border; }
+  body { @apply bg-zg-bg text-zg-text; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-zg-bg; }
+  ::-webkit-scrollbar-thumb { @apply bg-zg-muted/30 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-zg-muted/50; }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-zg-card/60 backdrop-blur-md border border-white/5 rounded-xl shadow-lg;
+  }
+  .glass-card-hover {
+    @apply glass-card hover:border-zg-cyan/20 hover:shadow-zg-cyan/5 transition-all duration-300;
+  }
+  .btn-primary {
+    @apply px-4 py-2 bg-zg-cyan text-zg-bg font-semibold rounded-lg
+      hover:bg-zg-cyan/90 transition-all duration-200 text-sm;
+  }
+  .btn-danger {
+    @apply px-4 py-2 bg-zg-crimson text-white font-semibold rounded-lg
+      hover:bg-zg-crimson/90 transition-all duration-200 text-sm;
+  }
+  .btn-ghost {
+    @apply px-4 py-2 text-zg-muted hover:text-zg-text hover:bg-white/5 
+      rounded-lg transition-all duration-200 text-sm;
+  }
+  .input-field {
+    @apply w-full px-4 py-2.5 bg-zg-bg/50 border border-zg-border rounded-lg
+      text-zg-text placeholder:text-zg-muted/50 focus:outline-none focus:border-zg-cyan/50
+      focus:ring-1 focus:ring-zg-cyan/30 transition-all duration-200 text-sm;
+  }
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-allowed { @apply badge bg-zg-emerald/15 text-zg-emerald; }
+  .badge-denied { @apply badge bg-zg-crimson/15 text-zg-crimson; }
+  .badge-challenged { @apply badge bg-zg-amber/15 text-zg-amber; }
+  .badge-admin { @apply badge bg-zg-purple/15 text-zg-purple; }
+  .badge-analyst { @apply badge bg-zg-cyan/15 text-zg-cyan; }
+  .badge-user { @apply badge bg-zg-emerald/15 text-zg-emerald; }
+  .badge-guest { @apply badge bg-zg-muted/15 text-zg-muted; }
+  .badge-low { @apply badge bg-blue-500/15 text-blue-400; }
+  .badge-medium { @apply badge bg-zg-amber/15 text-zg-amber; }
+  .badge-high { @apply badge bg-orange-500/15 text-orange-400; }
+  .badge-critical { @apply badge bg-zg-crimson/15 text-zg-crimson; }
+  .page-header {
+    @apply mb-6;
+  }
+  .page-title {
+    @apply text-2xl font-bold font-heading text-white;
+  }
+  .page-subtitle {
+    @apply text-sm text-zg-muted mt-1;
+  }
+}
+
+/* Animated hex background for login */
+.hex-bg {
+  position: fixed; inset: 0; overflow: hidden; z-index: 0;
+}
+.hex-bg::before {
+  content: '';
+  position: absolute; inset: -50%;
+  background-image:
+    linear-gradient(30deg, transparent 49.5%, rgba(0, 212, 255, 0.03) 49.5%, rgba(0, 212, 255, 0.03) 50.5%, transparent 50.5%),
+    linear-gradient(150deg, transparent 49.5%, rgba(0, 212, 255, 0.03) 49.5%, rgba(0, 212, 255, 0.03) 50.5%, transparent 50.5%),
+    linear-gradient(90deg, transparent 49.5%, rgba(0, 212, 255, 0.03) 49.5%, rgba(0, 212, 255, 0.03) 50.5%, transparent 50.5%);
+  background-size: 80px 140px;
+  animation: hexmove 20s linear infinite;
+}
+@keyframes hexmove {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(80px, 140px); }
+}

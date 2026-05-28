@@ -1,0 +1,25 @@
+{
+  "name": "zeroguard",
+  "version": "1.0.0",
+  "description": "ZeroGuard — Zero Trust Network Architecture Platform",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently -n client,server -c cyan,green \"npm run dev -w client\" \"npm run dev -w server\"",
+    "build": "npm run build -w client && npm run build -w server",
+    "seed": "npm run seed -w server",
+    "lint": "npm run lint -w client && npm run lint -w server",
+    "clean": "rimraf client/dist server/dist"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.5"
+  },
+  "dependencies": {
+    "mammoth": "^1.12.0"
+  }
+}

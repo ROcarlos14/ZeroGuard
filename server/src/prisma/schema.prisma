@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  username     String      @unique
+  passwordHash String
+  role         String      @default("USER")
+  department   String
+  isActive     Boolean     @default(true)
+  mfaEnabled   Boolean     @default(false)
+  mfaSecret    String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  riskScore    Int         @default(0)
+  devices      Device[]
+  sessions     Session[]
+  accessLogs   AccessLog[]
+}
+
+model Device {
+  id              String         @id @default(uuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  name            String
+  type            String
+  operatingSystem String
+  browserUserAgent String
+  ipAddress       String
+  isTrusted       Boolean        @default(false)
+  trustScore      Int            @default(0)
+  lastSeen        DateTime       @default(now())
+  registeredAt    DateTime       @default(now())
+  posture         DevicePosture?
+  sessions        Session[]
+}
+
+model DevicePosture {
+  id               String   @id @default(uuid())
+  deviceId         String   @unique
+  device           Device   @relation(fields: [deviceId], references: [id])
+  isEncrypted      Boolean  @default(false)
+  hasAntivirus     Boolean  @default(false)
+  isOsUpToDate     Boolean  @default(false)
+  hasFirewall      Boolean  @default(false)
+  screenLockEnabled Boolean @default(false)
+  postureScore     Int      @default(0)
+  checkedAt        DateTime @default(now())
+}
+
+model Session {
+  id                String      @id @default(uuid())
+  userId            String
+  user              User        @relation(fields: [userId], references: [id])
+  deviceId          String
+  device            Device      @relation(fields: [deviceId], references: [id])
+  token             String      @unique
+  refreshToken      String      @unique
+  ipAddress         String
+  userAgent         String
+  isActive          Boolean     @default(true)
+  createdAt         DateTime    @default(now())
+  expiresAt         DateTime
+  lastActivityAt    DateTime    @default(now())
+  terminatedAt      DateTime?
+  terminationReason String?
+  mfaVerified       Boolean     @default(false)
+  accessLogs        AccessLog[]
+}
+
+model Resource {
+  id                 String      @id @default(uuid())
+  name               String
+  description        String
+  type               String
+  sensitivityLevel   String
+  endpoint           String      @unique
+  allowedRoles       String
+  allowedDepartments String
+  minTrustScore      Int         @default(50)
+  requiresMFA        Boolean     @default(false)
+  isActive           Boolean     @default(true)
+  createdAt          DateTime    @default(now())
+  accessLogs         AccessLog[]
+}
+
+model AccessLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  sessionId  String?
+  session    Session? @relation(fields: [sessionId], references: [id])
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id])
+  action     String
+  outcome    String
+  reason     String?
+  ipAddress  String
+  timestamp  DateTime @default(now())
+  riskScore  Int      @default(0)
+}
+
+model PolicyRule {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  condition   String
+  action      String
+  priority    Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ThreatAlert {
+  id               String    @id @default(uuid())
+  type             String
+  severity         String
+  title            String
+  description      String
+  affectedUserId   String?
+  affectedDeviceId String?
+  ipAddress        String?
+  isResolved       Boolean   @default(false)
+  resolvedAt       DateTime?
+  createdAt        DateTime  @default(now())
+}
+
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+}
