@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: zeroguard-api
+    env: node
+    rootDir: server
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: REFRESH_TOKEN_SECRET
+        sync: false
+      - key: CLIENT_URL
+        sync: false
