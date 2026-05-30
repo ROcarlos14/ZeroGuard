@@ -159,14 +159,25 @@ router.post('/:id/posture', async (req: AuthRequest, res, next) => {
 // ── DELETE /:id ─ Remove device ────────────────────────
 router.delete('/:id', async (req: AuthRequest, res, next) => {
   try {
-    // Terminate sessions on this device
-    await prisma.session.updateMany({
-      where: { deviceId: req.params.id, isActive: true },
-      data: { isActive: false, terminatedAt: new Date(), terminationReason: 'Device removed' },
-    });
+    // First, find all sessions for this device
+    const sessions = await prisma.session.findMany({ where: { deviceId: req.params.id } });
+    const sessionIds = sessions.map(s => s.id);
+
+    // Unlink these sessions from AccessLogs to prevent foreign key errors
+    if (sessionIds.length > 0) {
+      await prisma.accessLog.updateMany({
+        where: { sessionId: { in: sessionIds } },
+        data: { sessionId: null },
+      });
+      // Now delete the sessions
+      await prisma.session.deleteMany({
+        where: { deviceId: req.params.id },
+      });
+    }
 
     // Delete posture first
     await prisma.devicePosture.deleteMany({ where: { deviceId: req.params.id } });
+    // Finally, delete the device
     await prisma.device.delete({ where: { id: req.params.id } });
 
     res.json({ success: true, data: { message: 'Device removed' } });

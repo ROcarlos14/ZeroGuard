@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Filter, Eye, Edit, UserX, X } from 'lucide-react';
+import { Search, Filter, Eye, Edit, UserX, X, Trash2 } from 'lucide-react';
 import { usersAPI, sessionsAPI } from '../services/api';
 import { getRoleBadgeClass, formatDate, timeAgo } from '../utils/helpers';
 
@@ -10,6 +10,7 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
   const [selected, setSelected] = useState<any>(null);
+  const [userToDelete, setUserToDelete] = useState<any>(null);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ username: '', email: '', password: '', role: 'USER', department: '' });
@@ -21,6 +22,12 @@ export default function UsersPage() {
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       isActive ? usersAPI.deactivate(id) : usersAPI.update(id, { isActive: true }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  });
+
+  const deleteUser = useMutation({
+    mutationFn: (id: string) => usersAPI.deactivate(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+    onError: (err: any) => alert(err.response?.data?.error || 'Failed to delete user'),
   });
 
   const terminateSession = useMutation({
@@ -42,7 +49,7 @@ export default function UsersPage() {
     setSelected(data.data);
   };
 
-  const users = usersData?.data || [];
+  const users = (usersData?.data || []).filter((u: any) => u.isActive);
 
   return (
     <div>
@@ -120,6 +127,16 @@ export default function UsersPage() {
                     <div className="flex gap-1">
                       <button onClick={() => loadUserDetail(user.id)} className="p-1.5 rounded hover:bg-white/5 text-zg-muted hover:text-zg-cyan">
                         <Eye className="w-4 h-4" />
+                      </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setUserToDelete(user);
+                          }} 
+                          className="p-1.5 rounded hover:bg-white/5 text-zg-muted hover:text-zg-crimson"
+                          title="Delete User"
+                        >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -239,6 +256,32 @@ export default function UsersPage() {
                 </button>
               </div>
               {createUser.isError && <p className="text-xs text-zg-crimson text-center">Failed to create user. Email or username might be taken.</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {userToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setUserToDelete(null)}>
+          <div className="w-full max-w-sm bg-zg-surface rounded-xl border border-zg-border p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-zg-crimson" /> Delete User
+              </h2>
+              <button onClick={() => setUserToDelete(null)} className="text-zg-muted hover:text-white"><X className="w-5 h-5" /></button>
+            </div>
+            <p className="text-sm text-zg-muted mb-6">
+              Are you sure you want to delete <strong>{userToDelete.username}</strong>? This action will deactivate the user and terminate their sessions.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setUserToDelete(null)} className="flex-1 btn-ghost border border-zg-border">Cancel</button>
+              <button onClick={() => {
+                deleteUser.mutate(userToDelete.id);
+                setUserToDelete(null);
+              }} className="flex-1 bg-zg-crimson text-white rounded font-medium hover:bg-zg-crimson/80 transition-colors">
+                Delete
+              </button>
             </div>
           </div>
         </div>

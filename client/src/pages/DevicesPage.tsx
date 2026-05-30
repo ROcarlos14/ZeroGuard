@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Monitor, Laptop, Smartphone, Tablet, Server, Shield, X, CheckCircle, XCircle } from 'lucide-react';
+import { Monitor, Laptop, Smartphone, Tablet, Server, Shield, X, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { devicesAPI } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 
@@ -10,6 +10,7 @@ export default function DevicesPage() {
   const qc = useQueryClient();
   const { user } = useAuthStore();
   const [selected, setSelected] = useState<any>(null);
+  const [deviceToDelete, setDeviceToDelete] = useState<any>(null);
   const [showPosture, setShowPosture] = useState(false);
   const [postureForm, setPostureForm] = useState({ isEncrypted: false, hasAntivirus: false, isOsUpToDate: false, hasFirewall: false, screenLockEnabled: false });
 
@@ -21,6 +22,12 @@ export default function DevicesPage() {
   const toggleTrust = useMutation({
     mutationFn: ({ id, isTrusted }: { id: string; isTrusted: boolean }) => devicesAPI.setTrust(id, { isTrusted: !isTrusted }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['devices'] }),
+  });
+
+  const deleteDevice = useMutation({
+    mutationFn: (id: string) => devicesAPI.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['devices'] }),
+    onError: (err: any) => alert(err.response?.data?.error || 'Failed to delete device'),
   });
 
   const submitPosture = useMutation({
@@ -109,12 +116,24 @@ export default function DevicesPage() {
                     </td>
                     <td className="p-3 text-xs text-zg-muted">{new Date(device.lastSeen).toLocaleDateString()}</td>
                     <td className="p-3">
-                      <button onClick={() => { setSelected(device); setPostureForm({
-                        isEncrypted: device.posture?.isEncrypted || false, hasAntivirus: device.posture?.hasAntivirus || false,
-                        isOsUpToDate: device.posture?.isOsUpToDate || false, hasFirewall: device.posture?.hasFirewall || false,
-                        screenLockEnabled: device.posture?.screenLockEnabled || false,
-                      }); setShowPosture(true); }}
-                        className="text-xs text-zg-cyan hover:underline">Posture Check</button>
+                      <div className="flex gap-3 items-center">
+                        <button onClick={() => { setSelected(device); setPostureForm({
+                          isEncrypted: device.posture?.isEncrypted || false, hasAntivirus: device.posture?.hasAntivirus || false,
+                          isOsUpToDate: device.posture?.isOsUpToDate || false, hasFirewall: device.posture?.hasFirewall || false,
+                          screenLockEnabled: device.posture?.screenLockEnabled || false,
+                        }); setShowPosture(true); }}
+                          className="text-xs text-zg-cyan hover:underline">Posture Check</button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeviceToDelete(device);
+                          }}
+                          className="p-1 rounded hover:bg-white/5 text-zg-muted hover:text-zg-crimson"
+                          title="Delete Device"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -205,6 +224,32 @@ export default function DevicesPage() {
                   {registerDevice.isPending ? 'Registering...' : 'Register Device'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deviceToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDeviceToDelete(null)}>
+          <div className="w-full max-w-sm bg-zg-surface rounded-xl border border-zg-border p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-zg-crimson" /> Delete Device
+              </h2>
+              <button onClick={() => setDeviceToDelete(null)} className="text-zg-muted hover:text-white"><X className="w-5 h-5" /></button>
+            </div>
+            <p className="text-sm text-zg-muted mb-6">
+              Are you sure you want to delete <strong>{deviceToDelete.name}</strong>? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeviceToDelete(null)} className="flex-1 btn-ghost border border-zg-border">Cancel</button>
+              <button onClick={() => {
+                deleteDevice.mutate(deviceToDelete.id);
+                setDeviceToDelete(null);
+              }} className="flex-1 bg-zg-crimson text-white rounded font-medium hover:bg-zg-crimson/80 transition-colors">
+                Delete
+              </button>
             </div>
           </div>
         </div>
